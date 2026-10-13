@@ -81,5 +81,6 @@
   .anat .iso-plate-corner[data-corner="title"]{max-width:62%;overflow:hidden;text-overflow:ellipsis}
   .anat .iso-plate-corner[data-corner="hint"]{bottom:20px}
   .anat .iso-plate-corner[data-corner="readout"]{font-size:10px}
-  .anat-stage{margin:0 -6px}
+  .anat-stage{margin:0 -6px;overflow:hidden}
+  .anat-stage>svg{width:118%;max-width:none;margin-left:-9%}
 }
