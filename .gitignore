@@ -1,0 +1,4 @@
+# Salidas regenerables de las figuras (node build.mjs y node integrar.mjs)
+figuras/**/*.html
+figuras/**/*.frag.js
+figuras/shots/
