@@ -351,7 +351,7 @@ function dial(n, centre, stemDir) {
   const label = k.faceTextSvg(planeMatrix(G.add3(G.add3(o, G.mul3(d, T)), G.mul3(down, 6)), right, down), String(n), { size: 5.2, tone: "hi", anchor: "middle" });
   const face = S(G.disc(0, T, R, F, P), { tone: "hi", inner: "" }) + Ln(G.circleOf(F, T, R - 0.9, P, 48), { tone: "lo" }) + Ln(ticks, { tone: "lo" }) + label + `<path class="iso-line anat-needle" data-tone="lit" data-free="start" data-aguja="t${n}" d=""/>` + Dots([at(G.pointOf(F, T, 0, 0))], { size: 0.6, tone: "hi" });
   put(part, G.add3(o, G.mul3(d, T / 2)), face, { bias: 0.3, name: `${part}.esfera`, shapes: [record(A.disc(F, 0, T, R, { name: `${part}.esfera`, owner: D[n].owner }))] });
-  AGUJAS.push({ id: `t${n}`, n, F: { o: F.o, a: F.a, u: F.u, v: F.v }, s: T + 0.05, r: R - 1.4, tail: 1.6, a0: -135 * DEG, a1: 135 * DEG, min: 200, max: 1600 });
+  AGUJAS.push({ id: `t${n}`, n, F: { o: F.o, a: F.a, u: F.u, v: F.v }, s: T + 0.05, r: R - 1.15, tail: 1.6, a0: -135 * DEG, a1: 135 * DEG, min: 200, max: 1600 });
 }
 dial(1, [-240, YS, 90], TOWARD);
 dial(2, [-210, YS, 92], TOWARD);
