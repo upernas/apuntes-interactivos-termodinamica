@@ -87,3 +87,5 @@
 /* líneas de corriente animadas */
 .anat [data-flujo] .iso-line{stroke-width:1.3px;stroke-dasharray:8 8;animation:iso-flow 1.6s linear infinite}
 @media (prefers-reduced-motion:reduce){.anat [data-flujo] .iso-line{animation:none}}
+.anat .anat-pala{fill:var(--anatomy-face);stroke:var(--anatomy-hi);stroke-width:.6px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.anat .it[data-on] .anat-pala{stroke:var(--anat-sel);fill:var(--anat-sel-fill)}

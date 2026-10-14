@@ -59,6 +59,20 @@ function anatMontar(root, spec) {
 
   function spokes(r) {
     let d = "";
+    if (r.pala) {
+      // palas como polígonos en el plano del disco: borde de ataque (+w) y de salida (−w)
+      for (let i = 0; i < r.count; i++) {
+        const a = r.phase + (i / r.count) * 2 * Math.PI;
+        const t = [0, 1, 2].map((q) => -Math.sin(a) * r.F.u[q] + Math.cos(a) * r.F.v[q]);
+        const at = (rad, w) => {
+          const c = pointOf(r.F, r.s, rad, a);
+          return iso([c[0] + t[0] * w, c[1] + t[1] * w, c[2] + t[2] * w], P);
+        };
+        const pts = [...r.pala.map(([rad, w]) => at(rad, w)), ...[...r.pala].reverse().map(([rad, w]) => at(rad, -w))];
+        d += "M" + pts.map(fmt).join("L") + "Z";
+      }
+      return d;
+    }
     for (let i = 0; i < r.count; i++) {
       const a = r.phase + (i / r.count) * 2 * Math.PI;
       d += "M" + fmt(iso(pointOf(r.F, r.s, r.r0, a), P)) + "L" + fmt(iso(pointOf(r.F, r.s, r.r1, a + r.sweep), P));
