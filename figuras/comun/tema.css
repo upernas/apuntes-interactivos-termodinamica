@@ -102,3 +102,5 @@
 .anat .anat-llama path{filter:blur(1.2px)}
 .anat .anat-llama-nucleo{fill:#F2C14E}
 .anat-fantasma .iso-line{stroke-width:.8px}
+.anat .iso-plate-corner[data-corner="fig"]{font-family:var(--serif,Georgia,serif);font-size:16px;font-weight:600;letter-spacing:-.01em;line-height:1.1;color:var(--anatomy-strong);max-width:72%;white-space:normal}
+@media (max-width:560px){.anat .iso-plate-corner[data-corner="fig"]{font-size:13.5px;max-width:92%}}
