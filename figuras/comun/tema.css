@@ -89,3 +89,13 @@
 @media (prefers-reduced-motion:reduce){.anat [data-flujo] .iso-line{animation:none}}
 .anat .anat-pala{fill:var(--anatomy-face);stroke:var(--anatomy-hi);stroke-width:.6px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .anat .it[data-on] .anat-pala{stroke:var(--anat-sel);fill:var(--anat-sel-fill)}
+/* motores: piezas animadas e indicador */
+.anat .anat-pieza{fill:var(--anatomy-face);stroke:var(--anatomy-hi);stroke-width:.6px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.anat .it[data-on] .anat-pieza{stroke:var(--anat-sel);fill:var(--anat-sel-fill)}
+.anat .anat-pantalla-fondo{fill:var(--anat-ui-accent-l);stroke:var(--anatomy-mid);stroke-width:.4px;vector-effect:non-scaling-stroke}
+.anat .anat-eje{fill:none;stroke:var(--anatomy-mid);stroke-width:.4px;vector-effect:non-scaling-stroke}
+.anat .anat-ciclo{fill:none;stroke:var(--anatomy-red);stroke-width:1px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.anat .anat-num,.anat .anat-eje-txt{font-family:var(--anatomy-mono);font-size:3px;fill:var(--anatomy-strong);font-weight:700}
+.anat .anat-eje-txt{fill:var(--anatomy-muted);font-weight:400;font-style:italic}
+.anat .anat-punto{fill:var(--anatomy-lit);stroke:var(--anatomy-paper);stroke-width:.3px}
+.anat .anat-chispa{transition:none}

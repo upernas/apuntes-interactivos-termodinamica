@@ -29,6 +29,7 @@ function anatMontar(root, spec) {
   let touring = !still.matches && Boolean(spec.tour);
   let clock = 0;
   let idle = 0;
+  let reloj = 0;
 
   const groups = new Map();
   svg.querySelectorAll(".it[data-part]").forEach((el) => {
@@ -142,7 +143,7 @@ function anatMontar(root, spec) {
       r.phase = r.fase(m, x);
       r.el.setAttribute("d", spokes(r));
     }
-    if (spec.animar) spec.animar(m, x, svg);
+    if (spec.animar) spec.animar(m, x, svg, reloj);
     renderPanel(m);
   }
 
@@ -161,6 +162,7 @@ function anatMontar(root, spec) {
       }
     }
     x = calm ? target : x + (target - x) * (1 - Math.exp(-dt / 0.35));
+    if (spec.continuo && !calm) reloj += dt;
     if (!calm) for (const r of rotors.filter((q) => q.vueltas)) {
       r.phase = (r.phase + dt * 2 * Math.PI * r.vueltas(spec.modelo(x), x)) % (2 * Math.PI);
       if (r.el) r.el.setAttribute("d", spokes(r));
@@ -168,7 +170,7 @@ function anatMontar(root, spec) {
     if (Math.abs(target - x) < C.step * 0.02) x = target;
     if (input && document.activeElement !== input && !touring) input.value = String(target);
     draw();
-    const settled = !touring && x === target && idle <= 0 && !(rotors.some((q) => q.vueltas) && !calm);
+    const settled = !touring && x === target && idle <= 0 && !((rotors.some((q) => q.vueltas) || spec.continuo) && !calm);
     frame = visible && !settled ? requestAnimationFrame(tick) : 0;
   }
   const run = () => {
