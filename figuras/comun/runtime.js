@@ -44,6 +44,8 @@ function anatMontar(root, spec) {
   let leverIndex = -1;
   const glows = [...svg.querySelectorAll("[data-brillo]")];
   const buttons = [...root.querySelectorAll("[data-pick]")];
+  const rotors = (spec.rotores || []).map((r) => ({ ...r, el: svg.querySelector(r.sel), phase: 0 }));
+  const flows = (spec.flujos || []).map((f) => ({ ...f, els: [...svg.querySelectorAll(f.sel)] }));
 
   const pointOf = (F, s, r, angle) => [0, 1, 2].map((i) => F.o[i] + F.a[i] * s + r * (Math.cos(angle) * F.u[i] + Math.sin(angle) * F.v[i]));
   const fmt = (p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
@@ -55,6 +57,14 @@ function anatMontar(root, spec) {
     return `M${fmt(tail)}L${fmt(tip)}`;
   }
 
+  function spokes(r) {
+    let d = "";
+    for (let i = 0; i < r.count; i++) {
+      const a = r.phase + (i / r.count) * 2 * Math.PI;
+      d += "M" + fmt(iso(pointOf(r.F, r.s, r.r0, a), P)) + "L" + fmt(iso(pointOf(r.F, r.s, r.r1, a + r.sweep), P));
+    }
+    return d;
+  }
   function select(id, announce = true) {
     if (selected === id) return;
     if (selected) {
@@ -110,6 +120,10 @@ function anatMontar(root, spec) {
         leverIndex = index;
       }
     }
+    for (const f of flows) {
+      const dur = (32 / Math.max(1, f.velocidad(m, x))).toFixed(3) + "s";
+      for (const el of f.els) if (el.style.animationDuration !== dur) el.style.animationDuration = dur;
+    }
     if (spec.animar) spec.animar(m, x, svg);
     renderPanel(m);
   }
@@ -129,10 +143,14 @@ function anatMontar(root, spec) {
       }
     }
     x = calm ? target : x + (target - x) * (1 - Math.exp(-dt / 0.35));
+    if (!calm) for (const r of rotors) {
+      r.phase = (r.phase + dt * 2 * Math.PI * r.vueltas(spec.modelo(x), x)) % (2 * Math.PI);
+      if (r.el) r.el.setAttribute("d", spokes(r));
+    }
     if (Math.abs(target - x) < C.step * 0.02) x = target;
     if (input && document.activeElement !== input && !touring) input.value = String(target);
     draw();
-    const settled = !touring && x === target && idle <= 0;
+    const settled = !touring && x === target && idle <= 0 && !(rotors.length && !calm);
     frame = visible && !settled ? requestAnimationFrame(tick) : 0;
   }
   const run = () => {

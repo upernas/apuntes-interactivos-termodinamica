@@ -197,5 +197,64 @@ export function piezas(E) {
     return { ring, svg, frames: degs.map((d) => compactSvg(svg(d))) };
   }
 
-  return { radiusAt, shifted, alongX, alongY, upZ, stepped, shaft, AC, COJ, pedestal, dish, exchanger, dial, AGUJAS, pump, leverFrames };
+  // Envolvente de revolución cortada: solo existe el sector de ángulos [th0, th1] (la mitad cercana se quita
+  // para ver el interior). rIn(s), rOut(s): radios interior y exterior; ss: estaciones a lo largo del eje.
+  function shellCut(part, F, ss, rIn, rOut, th0, th1, { name = "envolvente", steps = 36, tone = "hi", bias = 0, extra = "" } = {}) {
+    const L = G.lightOf(P);
+    const Vv = G.viewOf(P);
+    const slope = (f, s) => (f(s + 0.05) - f(s - 0.05)) / 0.1;
+    const angle = (j) => th0 + ((th1 - th0) * j) / steps;
+    const pt = (s, r, a) => G.pointOf(F, s, r, a);
+    const sp = (p) => at(p);
+    const buckets = [[], [], [], [], []];
+    const fills = [];
+    const quad = (pts, normal) => {
+      if (G.dot3(G.unit3(normal), Vv) <= 1e-6) return;
+      let flat = pts.map(sp);
+      let area = 0;
+      for (let q = 0; q < flat.length; q++) area += flat[q][0] * flat[(q + 1) % flat.length][1] - flat[(q + 1) % flat.length][0] * flat[q][1];
+      if (area < 0) flat = flat.reverse();
+      const d = k.pathOf(flat, true);
+      buckets[G.bandOf(G.dot3(G.unit3(normal), L))].push(d);
+      fills.push(d);
+    };
+    for (let i = 0; i < ss.length - 1; i++) {
+      const s0 = ss[i];
+      const s1 = ss[i + 1];
+      const sm = (s0 + s1) / 2;
+      for (let j = 0; j < steps; j++) {
+        const a0 = angle(j);
+        const a1 = angle(j + 1);
+        const am = (a0 + a1) / 2;
+        const radial = G.radialOf(F, am);
+        quad([pt(s0, rIn(s0), a0), pt(s0, rIn(s0), a1), pt(s1, rIn(s1), a1), pt(s1, rIn(s1), a0)], G.sub3(G.mul3(F.a, slope(rIn, sm)), radial));
+        quad([pt(s0, rOut(s0), a0), pt(s0, rOut(s0), a1), pt(s1, rOut(s1), a1), pt(s1, rOut(s1), a0)], G.sub3(radial, G.mul3(F.a, slope(rOut, sm))));
+      }
+      for (const [a, sign] of [[th0, -1], [th1, 1]]) quad([pt(s0, rIn(s0), a), pt(s0, rOut(s0), a), pt(s1, rOut(s1), a), pt(s1, rIn(s1), a)], G.mul3(G.tangentOf(F, a), sign));
+    }
+    const sEnd = [ss[0], ss[ss.length - 1]];
+    sEnd.forEach((s, e) => {
+      for (let j = 0; j < steps; j++) quad([pt(s, rIn(s), angle(j)), pt(s, rOut(s), angle(j)), pt(s, rOut(s), angle(j + 1)), pt(s, rIn(s), angle(j + 1))], G.mul3(F.a, e ? 1 : -1));
+    });
+    const arc = (s, r) => k.pathOf(Array.from({ length: steps * 2 + 1 }, (_, j) => sp(pt(s, r, th0 + ((th1 - th0) * j) / (steps * 2)))));
+    const along = (f, a) => k.pathOf(ss.map((s) => sp(pt(s, f(s), a))));
+    const outline = [arc(sEnd[0], rOut(sEnd[0])), arc(sEnd[1], rOut(sEnd[1])), along(rOut, th0), along(rOut, th1), k.pathOf([sp(pt(sEnd[0], rIn(sEnd[0]), th0)), sp(pt(sEnd[0], rOut(sEnd[0]), th0))]), k.pathOf([sp(pt(sEnd[0], rIn(sEnd[0]), th1)), sp(pt(sEnd[0], rOut(sEnd[0]), th1))]), k.pathOf([sp(pt(sEnd[1], rIn(sEnd[1]), th0)), sp(pt(sEnd[1], rOut(sEnd[1]), th0))]), k.pathOf([sp(pt(sEnd[1], rIn(sEnd[1]), th1)), sp(pt(sEnd[1], rOut(sEnd[1]), th1))])].join("");
+    const crease = [arc(sEnd[0], rIn(sEnd[0])), arc(sEnd[1], rIn(sEnd[1])), along(rIn, th0), along(rIn, th1)].join("");
+    const paths = { fill: fills.join(""), outline, crease, top: buckets[4].join(""), shades: buckets.slice(0, 4).map((l) => l.join("")) };
+    // forma para el auditor: cuerpo de revolución menos una caja que ocupa el sector quitado
+    const poly = [...ss.map((s) => [s, rIn(s)]), ...[...ss].reverse().map((s) => [s, rOut(s)])];
+    const R = Math.max(...ss.map(rOut)) + 20;
+    const mid = (th0 + th1) / 2 + Math.PI;
+    const n = G.radialOf(F, mid);
+    const t = G.tangentOf(F, mid);
+    const sMid = (sEnd[0] + sEnd[1]) / 2;
+    const half = (sEnd[1] - sEnd[0]) / 2 + 20;
+    const box = A.orientedBox(G.add3(G.add3(F.o, G.mul3(F.a, sMid)), G.mul3(n, R / 2)), [F.a, n, t], [half, R / 2, R]);
+    const id = E.R.nameFor(`${part}.${name}`);
+    const shape = record(A.body(F, poly, { name: id, cut: [box] }));
+    put(part, G.add3(F.o, G.mul3(F.a, sMid)), S(paths, { tone }) + extra, { bias, name: id, shapes: [shape] });
+    return shape;
+  }
+
+  return { shellCut, radiusAt, shifted, alongX, alongY, upZ, stepped, shaft, AC, COJ, pedestal, dish, exchanger, dial, AGUJAS, pump, leverFrames };
 }
