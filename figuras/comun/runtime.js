@@ -138,6 +138,10 @@ function anatMontar(root, spec) {
       const dur = (32 / Math.max(1, f.velocidad(m, x))).toFixed(3) + "s";
       for (const el of f.els) if (el.style.animationDuration !== dur) el.style.animationDuration = dur;
     }
+    for (const r of rotors) if (r.fase && r.el) {
+      r.phase = r.fase(m, x);
+      r.el.setAttribute("d", spokes(r));
+    }
     if (spec.animar) spec.animar(m, x, svg);
     renderPanel(m);
   }
@@ -157,14 +161,14 @@ function anatMontar(root, spec) {
       }
     }
     x = calm ? target : x + (target - x) * (1 - Math.exp(-dt / 0.35));
-    if (!calm) for (const r of rotors) {
+    if (!calm) for (const r of rotors.filter((q) => q.vueltas)) {
       r.phase = (r.phase + dt * 2 * Math.PI * r.vueltas(spec.modelo(x), x)) % (2 * Math.PI);
       if (r.el) r.el.setAttribute("d", spokes(r));
     }
     if (Math.abs(target - x) < C.step * 0.02) x = target;
     if (input && document.activeElement !== input && !touring) input.value = String(target);
     draw();
-    const settled = !touring && x === target && idle <= 0 && !(rotors.length && !calm);
+    const settled = !touring && x === target && idle <= 0 && !(rotors.some((q) => q.vueltas) && !calm);
     frame = visible && !settled ? requestAnimationFrame(tick) : 0;
   }
   const run = () => {
