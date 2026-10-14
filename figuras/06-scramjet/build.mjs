@@ -1,4 +1,4 @@
-// Fig 2.2d · Scramjet: vehículo hipersónico (tipo X-43) colgado de un pórtico, con la pared lateral cercana
+// Fig 2.2g · Scramjet: vehículo hipersónico (tipo X-43) colgado de un pórtico, con la pared lateral cercana
 // del módulo propulsor quitada para ver el conducto. node build.mjs [--audit]
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -149,7 +149,7 @@ const fmt = (v, d) => v.toFixed(d).replace(".", ",");
 const html = (tema) =>
   tarjeta({
     id: "anat-scramjet",
-    fig: "Fig 2.2d",
+    fig: "Fig 2.2g",
     titulo: "Scramjet · combustión supersónica",
     pista: "Clic en una pieza · selector ← →",
     lectura: `M ${fmt(SCRAMJET.m0, 1)} · M₂ ${fmt(m0.Ma[2], 2)} · F ${fmt(m0.F, 1)} kN`,

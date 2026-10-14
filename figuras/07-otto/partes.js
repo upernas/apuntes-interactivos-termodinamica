@@ -1,7 +1,7 @@
 // Motor Otto turbo · descripción de piezas y estaciones (se ejecuta en el navegador).
 ANAT_FIGS["anat-otto"] = () => {
   const B = DATA.base;
-  const anim = motorAnimacion(DATA, false);
+  const anim = motorAnimacion(DATA, "otto");
   const K = (t) => `${anatNum(t)} K`;
   const bar = (p) => `${anatNum(p / 100, 2)} bar`;
   const MPa = (p) => `${anatNum(p / 1000, 2)} MPa`;
@@ -13,7 +13,7 @@ ANAT_FIGS["anat-otto"] = () => {
     piston: { titulo: "Pistón", funcion: "Recorre el cilindro entre el PMS y el PMI. En el ciclo ideal comprime el aire (1→2) y recibe el trabajo de la expansión (3→4).", valores: (m) => [["Tiempo actual", anim.fase()], ["Presión en el cilindro", MPa(anim.presion()), "h"], st(m, 2), st(m, 3)] },
     biela: { titulo: "Biela", funcion: "Convierte el movimiento rectilíneo del pistón en giro del cigüeñal.", valores: (m) => [["Presión sobre el pistón", MPa(anim.presion()), "h"], ["Presión media indicada", MPa(fig(m).pmi * 1000)]] },
     cig: { titulo: "Cigüeñal", funcion: "Recoge el trabajo de los cuatro cilindros. En un motor de cuatro tiempos da dos vueltas por cada ciclo.", valores: (m) => [["Régimen", `${B.rpm} rpm`], ["Potencia indicada", `${anatNum(fig(m).potencia, 0)} kW`, "g"]] },
-    bloque: { titulo: "Bloque y cárter", funcion: "Aloja los cilindros y el cigüeñal; aquí está cortado por el plano del cilindro 1.", valores: (m) => [["Cilindrada", `${anatNum(B.cil * B.vd * 1000, 1)} L (${B.cil} × ${anatNum(B.vd * 1000, 1)} L)`], ["Relación de compresión r", anatNum(B.r)]] },
+    bloque: { titulo: "Bloque y cárter", funcion: "Aloja los cilindros y el cigüeñal. Aquí está cortado por el plano medio de los cuatro cilindros: la línea discontinua marca la mitad retirada, y se ven los pistones, que siguen el orden de encendido 1-3-4-2.", valores: (m) => [["Cilindrada", `${anatNum(B.cil * B.vd * 1000, 1)} L (${B.cil} × ${anatNum(B.vd * 1000, 1)} L)`], ["Relación de compresión r", anatNum(B.r)]] },
     culata: { titulo: "Culata", funcion: "Cierra los cilindros por arriba: forma la cámara de combustión y lleva válvulas, colectores y bujías.", valores: (m) => [["Volumen de la cámara", `${anatNum((B.vd * 1e6) / (B.r - 1), 1)} cm³ por cilindro`]] },
     encendido: { titulo: "Bujías", funcion: "Hacen saltar la chispa al final de la compresión: el aporte de calor ideal 2→3 es instantáneo, a volumen constante.", valores: (m) => [st(m, 2), st(m, 3), ["q<sub>in</sub> (isócoro) = c<sub>v</sub>(T₃ − T₂)", kJ(m.qin), "h"]] },
     admision: { titulo: "Colector de admisión y mariposa", funcion: "Reparte el aire sobrealimentado y enfriado entre los cilindros. En un Otto la mariposa regula la carga.", valores: (m) => [st(m, 1), ["Masa por cilindro y ciclo", `${anatNum(fig(m).masa * 1e6, 0)} mg`]] },

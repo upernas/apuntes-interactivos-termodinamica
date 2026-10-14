@@ -34,7 +34,7 @@ export function estadoEnAngulo(m, deg, base = MOTOR) {
   if (a < 180) return { v, p: m.p[1], fase: "Admisión (el pistón aspira aire a p₁)", punto: 0 };
   if (a < 360) return { v, p: m.p[1] * Math.pow(m.v[1] / v, gamma), fase: "Compresión 1 → 2", punto: 0 };
   if (a < 540) {
-    if (m.v[3] > m.v[2] && v < m.v[3]) return { v, p: m.p[3], fase: "Combustión a presión constante 2 → 3", punto: 0 };
+    if (m.v[3] > m.v[2] && v < m.v[3]) return { v, p: m.p[3], fase: m.faseIsobara || "Combustión a presión constante 2 → 3", punto: 0 };
     return { v, p: m.p[3] * Math.pow(m.v[3] / v, gamma), fase: "Expansión 3 → 4", punto: 0 };
   }
   return { v, p: m.p[1], fase: "Escape (cesión de calor 4 → 1 y barrido)", punto: 0 };

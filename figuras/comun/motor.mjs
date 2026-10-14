@@ -3,7 +3,7 @@
 import { k, G, A, DEG, compactSvg } from "./kitfig.mjs";
 import { MOTOR } from "./maci.mjs";
 
-export function construirMotor(E, X, { diesel = false, r: relacion, label }) {
+export function construirMotor(E, X, { diesel = false, r: relacion, label, pmax = diesel ? 16000 : 25000 }) {
   const { P, at, S, Ln, Dots, record, back, put, turned, band, pipe, boxAt, cylAt, padOn, boss } = E;
   const { stepped, alongX, alongY, upZ, dial, exchanger } = X;
   const BASE = { x: -196, y: -100, w: 346, d: 202, r: 10 };
@@ -42,65 +42,80 @@ export function construirMotor(E, X, { diesel = false, r: relacion, label }) {
   // ---------- bloque, cárter, culata y tapa (cilindro 1 seccionado por y = 0) ----------
   for (const x of [-64, 54]) boxAt("bloque", { x, y: -32, w: 12, d: 64, r: 1.2 }, 0, 8, { tone: "mid" }, { name: "bloque.bancada", bevel: 0.3, extra: Dots([at([x + 6, -28, 8]), at([x + 6, 28, 8])], { size: 0.42 }) });
   boxAt("bloque", { x: -84, y: -22, w: 168, d: 44, r: 3 }, 8, 14, { tone: "mid" }, { name: "bloque.carter", bevel: 0.5, inner: Ln(k.sideSeam({ x: -84, y: -22, w: 168, d: 44, r: 3 }, 16, P, 3), { tone: "faint" }) });
-  const MAIN = { x: -84, y: -26, w: 124, d: 52, r: 1.5 };
-  boxAt("bloque", MAIN, 22, 44, { tone: "hi" }, { name: "bloque.cigüeñal", bevel: 0.5 });
-  boxAt("bloque", MAIN, 66, DECK - 66, { tone: "hi" }, { name: "bloque.cilindros", bevel: 0.5, inner: Ln(k.sideSeam(MAIN, 96, P, 3), { tone: "faint" }) });
+  // El bloque se corta por y = 0 a lo largo de los cuatro cilindros: solo queda la mitad del fondo, y la mitad
+  // retirada se marca con línea fantasma. Así se ven los cuatro pistones, sus bielas y el cigüeñal.
+  const XS = [-60, -20, 20, XC];
   const cut = (pts, z, h, part, name, tone = "hi") => {
     const id = E.R.nameFor(`${part}.${name}`);
-    put(part, [62, -13, z + h / 2], S(k.extrude(pts, z, h, P, { convex: false }), { tone }), { name: id, shapes: [record(A.extruded(pts, z, h, { name: id }))] });
+    const cx = pts.reduce((sum, p) => sum + p[0], 0) / pts.length;
+    const cy = pts.reduce((sum, p) => sum + p[1], 0) / pts.length;
+    put(part, [cx, cy, z + h / 2], S(k.extrude(pts, z, h, P, { convex: false }), { tone }), { name: id, shapes: [record(A.extruded(pts, z, h, { name: id }))] });
   };
   const arc = (cx, r, from, to, n = 16) => Array.from({ length: n + 1 }, (_, i) => {
     const a = from + ((to - from) * i) / n;
     return [cx + r * Math.cos(a), r * Math.sin(a)];
   });
-  boxAt("bloque", { x: 40, y: -26, w: 44, d: 4, r: 0 }, 22, 44, { tone: "hi" }, { name: "bloque.carter-fondo", bevel: 0.3 });
-  boxAt("bloque", { x: 40, y: -22, w: 4, d: 22, r: 0 }, 22, 44, { tone: "hi" }, { name: "bloque.carter-pared" });
-  boxAt("bloque", { x: 80, y: -22, w: 4, d: 22, r: 0 }, 22, 44, { tone: "hi" }, { name: "bloque.carter-pared" });
-  // la media camisa se divide en sectores para que el pistón, dentro de la cavidad, se ordene contra cada trozo
-  const RECT = [40, -26, 84, 0];
-  const edge = (a) => {
-    const dx = Math.cos(a);
-    const dy = Math.sin(a);
-    const ts = [];
-    if (dx > 1e-9) ts.push((RECT[2] - XC) / dx);
-    if (dx < -1e-9) ts.push((RECT[0] - XC) / dx);
-    if (dy < -1e-9) ts.push((RECT[1] - 0) / dy);
-    if (dy > 1e-9) ts.push((RECT[3] - 0) / dy);
-    const t = Math.min(...ts.filter((v) => v > 0));
-    return [XC + dx * t, dy * t];
-  };
-  const corners = [[84, 0, 0], [84, -26, Math.atan2(-26, 84 - XC)], [40, -26, Math.atan2(-26, 40 - XC)], [40, 0, -Math.PI]];
+  // cárter: pared del fondo y tabiques de bancada entre cilindros
+  boxAt("bloque", { x: -84, y: -26, w: 168, d: 4, r: 0 }, 22, 44, { tone: "hi" }, { name: "bloque.carter-fondo", bevel: 0.3 });
+  for (const [x0, x1] of [[-84, -76], [-40, -36], [0, 4], [40, 44], [80, 84]]) boxAt("bloque", { x: x0, y: -22, w: x1 - x0, d: 22, r: 0 }, 22, 44, { tone: "hi" }, { name: "bloque.tabique" });
+  // cilindros: cada media camisa se divide en sectores para que el pistón, dentro de la cavidad, se ordene contra cada trozo
   const SECT = [0, -Math.PI / 4, -Math.PI / 2, (-3 * Math.PI) / 4, -Math.PI];
-  for (let i = 0; i < 4; i++) {
-    const a0 = SECT[i];
-    const a1 = SECT[i + 1];
-    const inner = arc(XC, BORE, a0, a1, 8);
-    const outer = [edge(a1), ...corners.filter(([, , a]) => a < a0 - 1e-9 && a > a1 + 1e-9).sort((p, q) => p[2] - q[2]).map(([x, y]) => [x, y]), edge(a0)];
-    cut([...inner, ...outer], 66, DECK - 66, "bloque", "camisa");
-  }
-  const HEAD = { x: -84, y: -26, w: 124, d: 52, r: 1.5 };
-  boxAt("culata", HEAD, DECK, 20, { tone: "hi" }, { name: "culata.cuerpo", bevel: 0.6 });
-  boxAt("culata", { x: 40, y: -26, w: 44, d: 26, r: 0 }, DECK, 20, { tone: "hi" }, { name: "culata.seccion", bevel: 0.3 });
+  XS.forEach((xc, index) => {
+    const RECT = [index === 0 ? -84 : xc - 20, -26, index === XS.length - 1 ? 84 : xc + 20, 0];
+    const edge = (a) => {
+      const dx = Math.cos(a);
+      const dy = Math.sin(a);
+      const ts = [];
+      if (dx > 1e-9) ts.push((RECT[2] - xc) / dx);
+      if (dx < -1e-9) ts.push((RECT[0] - xc) / dx);
+      if (dy < -1e-9) ts.push((RECT[1] - 0) / dy);
+      if (dy > 1e-9) ts.push((RECT[3] - 0) / dy);
+      const t = Math.min(...ts.filter((v) => v > 0));
+      return [xc + dx * t, dy * t];
+    };
+    const corners = [[RECT[2], 0, 0], [RECT[2], -26, Math.atan2(-26, RECT[2] - xc)], [RECT[0], -26, Math.atan2(-26, RECT[0] - xc)], [RECT[0], 0, -Math.PI]];
+    for (let i = 0; i < 4; i++) {
+      const a0 = SECT[i];
+      const a1 = SECT[i + 1];
+      const inner = arc(xc, BORE, a0, a1, 8);
+      const outer = [edge(a1), ...corners.filter(([, , a]) => a < a0 - 1e-9 && a > a1 + 1e-9).sort((p, q) => p[2] - q[2]).map(([x, y]) => [x, y]), edge(a0)];
+      cut([...inner, ...outer], 66, DECK - 66, "bloque", "camisa");
+    }
+  });
+  // línea fantasma de la mitad retirada del bloque (y de 0 a 26, del cárter a la cara superior)
+  const ghost = [
+    [[-84, 26, 22], [84, 26, 22]], [[84, 26, 22], [84, 26, DECK]], [[84, 26, DECK], [-84, 26, DECK]], [[-84, 26, DECK], [-84, 26, 22]],
+    [[84, 0, 22], [84, 26, 22]],
+    [[84, 26, DECK], [84, 26, HEAD_TOP]], [[-84, 26, DECK], [-84, 26, HEAD_TOP]], [[-84, 26, HEAD_TOP], [84, 26, HEAD_TOP]],
+    [[84, 0, HEAD_TOP], [84, 26, HEAD_TOP]], [[-84, 0, HEAD_TOP], [-84, 26, HEAD_TOP]],
+  ];
+  E.front.push(`<g class="anat-fantasma" aria-hidden="true">${Ln(ghost.map(([a, b]) => k.segment(a, b, P)).join(""), { tone: "mid", dashed: true })}</g>`);
+  // culata: también cortada; su mitad delantera no se dibuja (línea fantasma) pero sigue sosteniendo el colector de escape
+  boxAt("culata", { x: -84, y: -26, w: 168, d: 26, r: 0 }, DECK, 20, { tone: "hi" }, { name: "culata.seccion", bevel: 0.3 });
+  record(A.slab({ x: -84, y: 0, w: 168, d: 26, r: 0 }, DECK, 20, { name: "culata.fantasma" }, 3));
   const COVER = { x: -80, y: -22, w: 120, d: 44, r: 3 };
   boxAt("culata", COVER, HEAD_TOP, 10, { tone: "mid" }, { name: "culata.tapa", bevel: 0.6, extra: Dots([-70, -30, 10, 30].map((x) => at([x, -18, COVER_TOP])), { size: 0.4 }) });
   boxAt("culata", { x: 40, y: -22, w: 42, d: 22, r: 0 }, HEAD_TOP, 10, { tone: "mid" }, { name: "culata.tapa-seccion", bevel: 0.3 });
 
-  // ---------- cigüeñal visible en el cilindro 1: muñones y brazos ----------
-  const CK = alongX([44, 0, ZC]);
-  band("cig", CK, 0, 10, 5, { tone: "mid" }, { name: "cig.munon" });
-  band("cig", alongX([66, 0, ZC]), 0, 12, 5, { tone: "mid" }, { name: "cig.munon" });
-  put("cig", [56, 0, ZC], S(G.disc(54, 58, 19, alongX([0, 0, ZC]), P), { tone: "mid" }), { name: "cig.brazo", shapes: [record(A.disc(alongX([0, 0, ZC]), 54, 58, 19, { name: "cig.brazo" }))] });
-  put("cig", [64, 0, ZC], `<path class="anat-pieza" data-brazo d=""/>`, { name: "cig.brazo-cercano", bias: 0.6, shapes: [record(A.disc(alongX([0, 0, ZC]), 62, 66, 19, { name: "cig.brazo-cercano" })), record(A.disc(alongX([0, 0, ZC + RC]), 58, 62, 4, { name: "cig.munequilla" }))] });
+  // ---------- cigüeñal: muñones, contrapesos y brazos de cada cilindro ----------
+  const CX = alongX([0, 0, ZC]);
+  XS.forEach((xc, i) => {
+    band("cig", alongX([xc - 16, 0, ZC]), 0, 10, 5, { tone: "mid" }, { name: "cig.munon" });
+    band("cig", alongX([xc + 6, 0, ZC]), 0, 14, 5, { tone: "mid" }, { name: "cig.munon" });
+    put("cig", [xc - 4, 0, ZC], S(G.disc(xc - 6, xc - 2, 19, CX, P), { tone: "mid" }), { name: "cig.brazo", shapes: [record(A.disc(CX, xc - 6, xc - 2, 19, { name: "cig.brazo" }))] });
+    put("cig", [xc + 4, 0, ZC], `<path class="anat-pieza" data-brazo="${i}" d=""/>`, { name: "cig.brazo-cercano", bias: 0.6, shapes: [record(A.disc(CX, xc + 2, xc + 6, 19, { name: "cig.brazo-cercano" })), record(A.disc(alongX([0, 0, ZC + RC]), xc - 2, xc + 2, 4, { name: "cig.munequilla" }))] });
+  });
 
-  // ---------- pistón y biela (se mueven en el navegador; aquí en el PMS) ----------
-  const PF = upZ([XC, 0, ZPIN_TDC - 4]);
-  const crown = diesel ? Ln(G.circleOf(PF, 14, 7, P, 40), { tone: "lo" }) : "";
-  const piston = S(G.disc(0, 14, BORE - 0.3, PF, P), { tone: "hi", inner: Ln([3, 5.5, 8].map((s) => G.arcOf(PF, s, BORE - 0.3, P)).join(""), { tone: "lo" }) }) + crown;
-  put("piston", [XC, 0, ZPIN_TDC + 3], `<g data-piston>${piston}</g>`, { name: "piston.cuerpo", bias: 0.4, shapes: [A.disc(PF, 0, 14, BORE - 0.3, { name: "piston.cuerpo" })] });
-  put("biela", [XC, 0, ZC + RC + L / 2], `<path class="anat-pieza" data-biela d=""/>`, { name: "biela.cuerpo", bias: 0.5, shapes: [A.tube([[XC, 0, ZC + 20], [XC, 0, ZPIN_TDC]], 1.8, { name: "biela.cuerpo" })] });
+  // ---------- pistones y bielas (se mueven en el navegador; aquí en el PMS) ----------
+  XS.forEach((xc, i) => {
+    const PF = upZ([xc, 0, ZPIN_TDC - 4]);
+    const crown = diesel ? Ln(G.circleOf(PF, 14, 7, P, 40), { tone: "lo" }) : "";
+    const piston = S(G.disc(0, 14, BORE - 0.3, PF, P), { tone: "hi", inner: Ln([3, 5.5, 8].map((s) => G.arcOf(PF, s, BORE - 0.3, P)).join(""), { tone: "lo" }) }) + crown;
+    put("piston", [xc, 0, ZPIN_TDC + 3], `<g data-piston="${i}">${piston}</g>`, { name: "piston.cuerpo", bias: 0.4, shapes: [A.disc(PF, 0, 14, BORE - 0.3, { name: "piston.cuerpo" })] });
+    put("biela", [xc, 0, ZC + RC + L / 2], `<path class="anat-pieza" data-biela="${i}" d=""/>`, { name: "biela.cuerpo", bias: 0.5, shapes: [A.tube([[xc, 0, ZC + 20], [xc, 0, ZPIN_TDC]], 1.8, { name: "biela.cuerpo" })] });
+  });
 
   // ---------- bujías o inyectores con su rampa común ----------
-  const XS = [-60, -20, 20, XC];
   if (!diesel) {
     stepped("encendido", upZ([XC, 2.5, HEAD_TOP]), [[0, 2.5], [10, 2.5], [10, 2.5], [15, 2.5], [15, 2], [22, 2], [22, 1], [25, 1]], { name: "bujia", ribs: [18] });
     for (const x of XS.slice(0, 3)) stepped("encendido", upZ([x, 0, COVER_TOP]), [[0, 3.6], [5, 3.6], [5, 2], [12, 2], [12, 1], [15, 1]], { name: "bujia", ribs: [8] });
@@ -111,8 +126,11 @@ export function construirMotor(E, X, { diesel = false, r: relacion, label }) {
     stepped("inyeccion", alongX([-72, 0, RAIL_Z]), [[0, 5], [4, 5], [4, 4], [140, 4], [140, 5], [144, 5]], { name: "rampa", ribs: [36, 76, 116] });
     for (const x of [-72, 72]) boxAt("inyeccion", { x: x - 1, y: -3, w: 2, d: 6, r: 0.5 }, COVER_TOP, RAIL_Z - 5 - COVER_TOP, { tone: "mid" }, { name: "inyeccion.soporte" });
   }
-  const chispa = `<circle class="anat-glow anat-chispa" data-chispa cx="${at([XC, 0, DECK - HC / 2])[0].toFixed(1)}" cy="${at([XC, 0, DECK - HC / 2])[1].toFixed(1)}" r="${diesel ? 3.2 : 2.2}" opacity="0"/>`;
-  E.front.push(chispa);
+  // chispa (Otto) o llama de inyección (Diésel) en la cámara de cada cilindro
+  for (const [i, xc] of XS.entries()) {
+    const [cx, cy] = at([xc, 0, DECK - HC / 2]);
+    E.front.push(`<circle class="anat-glow anat-chispa" data-chispa="${i}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${diesel ? 3.2 : 2.2}" opacity="0"/>`);
+  }
 
   // ---------- colectores de escape y admisión ----------
   const ZM = DECK + 10;
@@ -172,7 +190,7 @@ export function construirMotor(E, X, { diesel = false, r: relacion, label }) {
   const pantalla = `<g transform="${screenM}" class="anat-pantalla"><rect class="anat-pantalla-fondo" x="1.5" y="1.5" width="35" height="27" rx="1"/><path class="anat-eje" d="M5 1.5V28.5M1.5 25H36.5"/><path class="anat-ciclo" data-ciclo d=""/>${[1, 2, 3, 4].map((n) => `<text class="anat-num" data-num="${n}" x="0" y="0">${n}</text>`).join("")}<text class="anat-eje-txt" x="6.5" y="5">p</text><text class="anat-eje-txt" x="33" y="27.8">v</text><circle class="anat-punto" data-punto r="1.1" cx="0" cy="0"/></g>`;
   put("ind", [IND.x + IND.w / 2, IND.y + IND.d + 0.1, 75], pantalla, { bias: 0.2, name: "ind.pantalla", shapes: [A.box([IND.x, IND.y + IND.d, 60], [IND.x + IND.w, IND.y + IND.d + 0.2, 90], { name: "ind.pantalla" })] });
   const PMAN = 84;
-  dial("p", [PMAN, -13, DECK + 10], [1, 0, 0], { hostR: 0.9, part: "manometro", min: 0, max: diesel ? 16000 : 25000, R: 7, stem: 5 });
+  dial("p", [PMAN, -13, DECK + 10], [1, 0, 0], { hostR: 0.9, part: "manometro", min: 0, max: pmax, R: 7, stem: 5 });
   // termómetros de las estaciones del aire
   dial("A", [XT, 27, ZT], [0.55, 0, 1], { hostR: 9.5, part: "eA", min: 250, max: 450 });
   dial("B", [XT, 47.5, 128], [1, 0.6, 0], { hostR: WATER, part: "eB", owner: D.B.owner, min: 250, max: 450 });
@@ -182,6 +200,7 @@ export function construirMotor(E, X, { diesel = false, r: relacion, label }) {
     BASE,
     LEVER,
     leverDeg,
-    anim: { XC, ZC, RC, L, ZPIN_TDC, DECK, HC, PIN_TOP, web: { x: 66, r: 19 }, screen: { pmax: diesel ? 16000 : 25000 } },
+    // orden de encendido 1-3-4-2: retraso de cada cilindro (de x = −60 a x = 60) respecto al cilindro 1, en grados de cigüeñal
+    anim: { XC, ZC, RC, L, ZPIN_TDC, DECK, HC, PIN_TOP, web: { r: 19 }, cil: XS.map((x, i) => ({ x, retraso: [360, 180, 540, 0][i] })), screen: { pmax } },
   };
 }

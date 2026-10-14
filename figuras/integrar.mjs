@@ -20,6 +20,10 @@ const FIGURAS = [
   ["06-scramjet", "scramjet"],
   ["07-otto", "otto"],
   ["08-diesel", "diesel"],
+  ["09-dual", "dual"],
+  ["10-turboeje", "turboeje"],
+  ["11-turborreactor", "turborreactor"],
+  ["12-postcombustion", "postcombustion"],
 ].filter(([dir, name]) => existsSync(join(HERE, dir, `${name}.frag.js`)));
 
 let html = readFileSync(WEB, "utf8");

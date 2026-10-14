@@ -1,4 +1,4 @@
-// Fig 2.2c · Estatorreactor (ramjet) en un banco de empuje frente a la tobera de un túnel de chorro libre.
+// Fig 2.2f · Estatorreactor (ramjet) en un banco de empuje frente a la tobera de un túnel de chorro libre.
 // node build.mjs [--audit]
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -159,7 +159,7 @@ const fmt = (v, d) => v.toFixed(d).replace(".", ",");
 const html = (tema) =>
   tarjeta({
     id: "anat-ramjet",
-    fig: "Fig 2.2c",
+    fig: "Fig 2.2f",
     titulo: "Estatorreactor · ramjet",
     pista: "Clic en una pieza · volante ← →",
     lectura: `M ${fmt(RAMJET.m0, 2)} · F ${fmt(m0.F, 1)} kN · η ${fmt(m0.eta * 100, 1)} %`,

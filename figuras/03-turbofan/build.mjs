@@ -203,7 +203,7 @@ const fmt = (v, d) => v.toFixed(d).replace(".", ",");
 const html = (tema) =>
   tarjeta({
     id: "anat-turbofan",
-    fig: "Fig 2.2a",
+    fig: "Fig 2.2c",
     titulo: "Turbofán · flujos separados",
     pista: "Clic en una pieza · palanca ← →",
     lectura: `T₄ ${TURBOFAN.t4} K · F ${fmt(m0.F, 1)} kN · η_p ${fmt(m0.etaP * 100, 1)} %`,

@@ -1,7 +1,7 @@
 // Motor Diésel turbo · descripción de piezas y estaciones (se ejecuta en el navegador).
 ANAT_FIGS["anat-diesel"] = () => {
   const B = DATA.base;
-  const anim = motorAnimacion(DATA, true);
+  const anim = motorAnimacion(DATA, "diesel");
   const K = (t) => `${anatNum(t)} K`;
   const bar = (p) => `${anatNum(p / 100, 2)} bar`;
   const MPa = (p) => `${anatNum(p / 1000, 2)} MPa`;
@@ -13,7 +13,7 @@ ANAT_FIGS["anat-diesel"] = () => {
     piston: { titulo: "Pistón", funcion: "Recorre el cilindro entre el PMS y el PMI. La cavidad de la cabeza forma la cámara de combustión donde se pulveriza el gasóleo.", valores: (m) => [["Tiempo actual", anim.fase()], ["Presión en el cilindro", MPa(anim.presion()), "h"], st(m, 2), st(m, 3)] },
     biela: { titulo: "Biela", funcion: "Convierte el movimiento rectilíneo del pistón en giro del cigüeñal; en un Diésel soporta presiones mucho mayores que en un Otto de igual tamaño.", valores: (m) => [["Presión sobre el pistón", MPa(anim.presion()), "h"], ["Presión media indicada", MPa(fig(m).pmi * 1000)]] },
     cig: { titulo: "Cigüeñal", funcion: "Recoge el trabajo de los cuatro cilindros: dos vueltas por ciclo en un motor de cuatro tiempos.", valores: (m) => [["Régimen", `${B.rpm} rpm`], ["Potencia indicada", `${anatNum(fig(m).potencia, 0)} kW`, "g"]] },
-    bloque: { titulo: "Bloque y cárter", funcion: "Aloja los cilindros y el cigüeñal; aquí está cortado por el plano del cilindro 1. La cámara de compresión es muy pequeña: r = 18.", valores: (m) => [["Cilindrada", `${anatNum(B.cil * B.vd * 1000, 1)} L (${B.cil} × ${anatNum(B.vd * 1000, 1)} L)`], ["Relación de compresión r", anatNum(B.r)]] },
+    bloque: { titulo: "Bloque y cárter", funcion: "Aloja los cilindros y el cigüeñal. Aquí está cortado por el plano medio de los cuatro cilindros: la línea discontinua marca la mitad retirada, y se ven los pistones, que siguen el orden de encendido 1-3-4-2. La cámara de compresión es muy pequeña: r = 18.", valores: (m) => [["Cilindrada", `${anatNum(B.cil * B.vd * 1000, 1)} L (${B.cil} × ${anatNum(B.vd * 1000, 1)} L)`], ["Relación de compresión r", anatNum(B.r)]] },
     culata: { titulo: "Culata", funcion: "Cierra los cilindros y aloja válvulas, colectores e inyectores.", valores: (m) => [["Volumen de la cámara", `${anatNum((B.vd * 1e6) / (B.r - 1), 1)} cm³ por cilindro`]] },
     inyeccion: { titulo: "Inyectores y rampa común", funcion: "La rampa mantiene el gasóleo a muy alta presión; cada inyector lo pulveriza al final de la compresión, cuando el aire ya está más caliente que su temperatura de autoinflamación: no hace falta chispa.", valores: (m) => [st(m, 2), st(m, 3), ["Relación de corte r<sub>c</sub> = v₃/v₂", anatNum(m.rc, 2), "h"], ["q<sub>in</sub> (isobárico) = c<sub>p</sub>(T₃ − T₂)", kJ(m.qin), "h"]] },
     admision: { titulo: "Colector de admisión", funcion: "Reparte el aire sobrealimentado y enfriado entre los cilindros. En un Diésel no hay mariposa: siempre entra todo el aire que se puede.", valores: (m) => [st(m, 1), ["Masa por cilindro y ciclo", `${anatNum(fig(m).masa * 1e6, 0)} mg`]] },

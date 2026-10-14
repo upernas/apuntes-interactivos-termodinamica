@@ -1,4 +1,4 @@
-// Fig 2.2b · Turbohélice de turbina libre (disposición tipo PT6: entrada trasera y flujo hacia delante),
+// Fig 2.2d · Turbohélice de turbina libre (disposición tipo PT6: entrada trasera y flujo hacia delante),
 // con la mitad cercana de la carcasa cortada. node build.mjs [--audit]
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -223,7 +223,7 @@ const fmt = (v, d) => v.toFixed(d).replace(".", ",");
 const html = (tema) =>
   tarjeta({
     id: "anat-turbohelice",
-    fig: "Fig 2.2b",
+    fig: "Fig 2.2d",
     titulo: "Turbohélice · turbina libre",
     pista: "Clic en una pieza · palanca ← →",
     lectura: `T₃ ${TURBOHELICE.t3} K · ${fmt(m0.potencia, 2)} MW en el eje · F ${fmt(m0.F, 1)} kN`,

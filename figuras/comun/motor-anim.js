@@ -1,5 +1,8 @@
 // Animación común de los motores alternativos (se ejecuta en el navegador; necesita iso() y translateAlong()).
-function motorAnimacion(DATA, diesel) {
+// tipo: "otto" (calor a volumen constante), "diesel" (a presión constante) o "dual" (primero isócoro y luego isobárico).
+function motorAnimacion(DATA, tipo) {
+  const isocoro = tipo !== "diesel";
+  const llama = tipo !== "otto";
   const A = DATA.anim;
   const P = DATA.P;
   const VELOCIDAD = 300; // grados de cigüeñal por segundo (un ciclo de cuatro tiempos en 2,4 s)
@@ -17,7 +20,7 @@ function motorAnimacion(DATA, diesel) {
       const e = estadoEnAngulo(m, d);
       pts.push([xL(m, e.v), yL(e.p)]);
     }
-    if (!diesel) pts.splice(60, 0, [xL(m, m.v[2]), yL(m.p[2])], [xL(m, m.v[2]), yL(m.p[3])]);
+    if (isocoro) pts.splice(60, 0, [xL(m, m.v[2]), yL(m.p[2])], [xL(m, m.v[2]), yL(m.p[3])]);
     const d = "M" + pts.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join("L") + "Z";
     return d + `M${xL(m, m.v[2]).toFixed(2)} ${yL(m.p[1]).toFixed(2)}H${xL(m, m.v[1]).toFixed(2)}`;
   }
@@ -27,32 +30,45 @@ function motorAnimacion(DATA, diesel) {
     animar(m, x, svg, t) {
       if (!el) {
         el = {
-          piston: svg.querySelector("[data-piston]"),
-          biela: svg.querySelector("[data-biela]"),
-          brazo: svg.querySelector("[data-brazo]"),
+          cil: A.cil.map((c, i) => ({
+            ...c,
+            piston: svg.querySelector(`[data-piston="${i}"]`),
+            biela: svg.querySelector(`[data-biela="${i}"]`),
+            brazo: svg.querySelector(`[data-brazo="${i}"]`),
+            chispa: svg.querySelector(`[data-chispa="${i}"]`),
+          })),
           ciclo: svg.querySelector("[data-ciclo]"),
           punto: svg.querySelector("[data-punto]"),
           nums: [...svg.querySelectorAll("[data-num]")],
-          chispa: svg.querySelector("[data-chispa]"),
         };
       }
       const deg = (t * VELOCIDAD + 300) % 720;
-      const th = (deg * Math.PI) / 180;
-      const s = Math.sin(th);
-      const c = Math.cos(th);
-      const zPin = A.ZC + A.RC * c + Math.sqrt(A.L * A.L - A.RC * A.RC * s * s);
-      el.piston.setAttribute("transform", translateAlong(P, [0, 0, zPin - A.ZPIN_TDC]));
-      const pinY = A.RC * s;
-      const pinZ = A.ZC + A.RC * c;
-      el.biela.setAttribute("d", path([[A.XC - 1.8, pinY, pinZ], [A.XC + 1.8, pinY, pinZ], [A.XC + 1.4, 0, zPin], [A.XC - 1.4, 0, zPin]]));
-      const wp = (phi, rho) => [A.web.x, rho * Math.sin(phi), A.ZC + rho * Math.cos(phi)];
-      const brazo = [];
-      for (let i = 0; i <= 12; i++) brazo.push(wp(th + Math.PI - 1.15 + (2.3 * i) / 12, A.web.r));
-      for (let i = 0; i <= 12; i++) {
-        const a = th - Math.PI / 2 + (Math.PI * i) / 12;
-        brazo.push([A.web.x, pinY + 6.5 * Math.sin(a), pinZ + 6.5 * Math.cos(a)]);
+      // cada cilindro va retrasado según el orden de encendido; el indicador y el manómetro siguen al cilindro 1
+      for (const c of el.cil) {
+        const local = (((deg - c.retraso) % 720) + 720) % 720;
+        const th = (local * Math.PI) / 180;
+        const s = Math.sin(th);
+        const co = Math.cos(th);
+        const zPin = A.ZC + A.RC * co + Math.sqrt(A.L * A.L - A.RC * A.RC * s * s);
+        if (c.piston) c.piston.setAttribute("transform", translateAlong(P, [0, 0, zPin - A.ZPIN_TDC]));
+        const pinY = A.RC * s;
+        const pinZ = A.ZC + A.RC * co;
+        if (c.biela) c.biela.setAttribute("d", path([[c.x - 1.8, pinY, pinZ], [c.x + 1.8, pinY, pinZ], [c.x + 1.4, 0, zPin], [c.x - 1.4, 0, zPin]]));
+        const wx = c.x + 6;
+        const brazo = [];
+        for (let i = 0; i <= 12; i++) {
+          const phi = th + Math.PI - 1.15 + (2.3 * i) / 12;
+          brazo.push([wx, A.web.r * Math.sin(phi), A.ZC + A.web.r * Math.cos(phi)]);
+        }
+        for (let i = 0; i <= 12; i++) {
+          const a = th - Math.PI / 2 + (Math.PI * i) / 12;
+          brazo.push([wx, pinY + 6.5 * Math.sin(a), pinZ + 6.5 * Math.cos(a)]);
+        }
+        if (c.brazo) c.brazo.setAttribute("d", path(brazo));
+        const dd = local - 360;
+        const brillo = llama ? (dd > -4 && dd < 45 ? Math.sin((Math.PI * (dd + 4)) / 49) : 0) : dd > -6 && dd < 30 ? Math.exp(-((dd + 2) * (dd + 2)) / 60) : 0;
+        if (c.chispa) c.chispa.setAttribute("opacity", brillo.toFixed(2));
       }
-      el.brazo.setAttribute("d", path(brazo));
       if (x !== lastX) {
         el.ciclo.setAttribute("d", ciclo(m));
         const pos = [null, [xL(m, m.v[1]) - 1, yL(m.p[1]) - 1.6], [xL(m, m.v[2]) + 1.4, yL(m.p[2]) + 2.2], [xL(m, m.v[3]) + 1.2, yL(m.p[3]) + 0.6], [xL(m, m.v[4]) - 1, yL(m.p[4]) - 1.4]];
@@ -68,9 +84,6 @@ function motorAnimacion(DATA, diesel) {
       fase = e.fase;
       el.punto.setAttribute("cx", xL(m, e.v).toFixed(2));
       el.punto.setAttribute("cy", yL(e.p).toFixed(2));
-      const dd = deg - 360;
-      const brillo = diesel ? (dd > -4 && dd < 45 ? Math.sin((Math.PI * (dd + 4)) / 49) : 0) : dd > -6 && dd < 30 ? Math.exp(-((dd + 2) * (dd + 2)) / 60) : 0;
-      el.chispa.setAttribute("opacity", brillo.toFixed(2));
     },
   };
 }

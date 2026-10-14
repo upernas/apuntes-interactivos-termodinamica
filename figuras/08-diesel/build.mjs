@@ -1,4 +1,4 @@
-// Fig 2.4b · Motor Diésel de cuatro cilindros con turbocompresor e intercooler (cilindro 1 seccionado).
+// Fig 2.4b · Motor Diésel de cuatro cilindros con turbocompresor e intercooler (bloque seccionado a lo largo de los cuatro cilindros).
 // node build.mjs [--audit]
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -22,7 +22,7 @@ const E = escena(P);
 const X = piezas(E);
 const M = construirMotor(E, X, { diesel: true, r: DIESEL.r, label: "DIÉSEL TURBO" });
 
-const LABEL_TEXT = "Motor Diésel de cuatro cilindros en línea sobre una bancada, con el cilindro 1 seccionado: pistón con cámara en la cabeza, biela y cigüeñal en movimiento, inyectores en una rampa común, colectores de admisión (sin mariposa) y de escape, turbocompresor con filtro y palanca de la válvula de descarga, intercooler aire-aire, manómetro de cilindro e indicador del diagrama p–v con los estados 1 a 4.";
+const LABEL_TEXT = "Motor Diésel de cuatro cilindros en línea sobre una bancada, con el bloque seccionado por el plano de los cilindros: cuatro pistones con cámara en la cabeza, biela y cigüeñal en movimiento, inyectores en una rampa común, colectores de admisión (sin mariposa) y de escape, turbocompresor con filtro y palanca de la válvula de descarga, intercooler aire-aire, manómetro de cilindro e indicador del diagrama p–v con los estados 1 a 4.";
 const svg = svgDe(E, { width: W, height: H, label: LABEL_TEXT });
 A.auditOrExit(E.R, P, { crowd: [] });
 
@@ -42,7 +42,7 @@ const html = (tema) =>
     pista: "Clic en una pieza · palanca ← →",
     lectura: `p₁ ${fmt(m0.p[1] / 100, 2)} bar · ${fmt(c0.potencia, 0)} kW · η ${fmt(m0.eta * 100, 1)} %`,
     svg,
-    aria: "Motor Diésel sobrealimentado con el cilindro 1 seccionado. Flechas: mueven la palanca de la válvula de descarga (presión de sobrealimentación). N o Intro: siguiente pieza.",
+    aria: "Motor Diésel sobrealimentado con el bloque seccionado. Flechas: mueven la palanca de la válvula de descarga (presión de sobrealimentación). N o Intro: siguiente pieza.",
     control: { min: DIESEL.piMin, max: DIESEL.piMax, step: 0.05, valor: DIESEL.pi0, etiquetaHtml: "Válvula de descarga · p<sub>1</sub>/p<sub>0</sub>", inicialTexto: `${fmt(DIESEL.pi0, 2)}`, minTexto: `${fmt(DIESEL.piMin, 1)} (atmosférico)`, maxTexto: fmt(DIESEL.piMax, 1) },
     partes: [...PARTES, ...ESTACIONES],
     claves: [

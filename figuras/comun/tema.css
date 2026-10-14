@@ -99,3 +99,6 @@
 .anat .anat-eje-txt{fill:var(--anatomy-muted);font-weight:400;font-style:italic}
 .anat .anat-punto{fill:var(--anatomy-lit);stroke:var(--anatomy-paper);stroke-width:.3px}
 .anat .anat-chispa{transition:none}
+.anat .anat-llama path{filter:blur(1.2px)}
+.anat .anat-llama-nucleo{fill:#F2C14E}
+.anat-fantasma .iso-line{stroke-width:.8px}
